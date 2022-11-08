@@ -1,11 +1,4 @@
 #![no_std]
-
-use syscall::*;
-
-pub fn write(fd: usize, buf: &[u8]) -> isize { sys_write(fd, buf) }
-pub fn exit(exit_code: i32) -> isize { sys_exit(exit_code) }
-
-
 #![feature(linkage)]
 #![feature(panic_info_message)]
 
@@ -38,13 +31,8 @@ fn main() -> i32 {
     panic!("Cannot find main!");
 }
 
-#![no_std]
-#![no_main]
 
-#[macro_use]
-extern crate user_lib;
+use syscall::*;
 
-#[no_mangle]
-fn main() -> i32 {
-    0
-}
+pub fn write(fd: usize, buf: &[u8]) -> isize { sys_write(fd, buf) }
+pub fn exit(exit_code: i32) -> isize { sys_exit(exit_code) }
