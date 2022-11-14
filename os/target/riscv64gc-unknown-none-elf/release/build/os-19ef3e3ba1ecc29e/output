@@ -3,3 +3,4 @@ cargo:rerun-if-changed=../user/target/riscv64gc-unknown-none-elf/release/
 app_0: 00hello_world
 app_1: 01store_fault
 app_2: 02power
+app_3: 03my_project
