@@ -1,5 +1,3 @@
-// os/src/task/context.rs
-
 #[repr(C)]
 pub struct TaskContext {
     ra: usize,

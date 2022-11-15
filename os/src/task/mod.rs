@@ -57,48 +57,47 @@ impl TaskManager {
         }
     }
 
-fn mark_current_suspended(&self) {
-    let mut inner = self.inner.borrow_mut();
-    let current = inner.current_task;
-    inner.tasks[current].task_status = TaskStatus::Ready;
-}
-
-fn mark_current_exited(&self) {
-    let mut inner = self.inner.borrow_mut();
-    let current = inner.current_task;
-    inner.tasks[current].task_status = TaskStatus::Exited;
-}
-
-fn find_next_task(&self) -> Option<usize> {
-    let inner = self.inner.borrow();
-    let current = inner.current_task;
-    (current + 1..current + self.num_app + 1)
-        .map(|id| id % self.num_app)
-        .find(|id| {
-            inner.tasks[*id].task_status == TaskStatus::Ready
-        })
-}
-
-fn run_next_task(&self) {
-    if let Some(next) = self.find_next_task() {
+    fn mark_current_suspended(&self) {
         let mut inner = self.inner.borrow_mut();
         let current = inner.current_task;
-        inner.tasks[next].task_status = TaskStatus::Running;
-        inner.current_task = next;
-        let current_task_cx_ptr2 = inner.tasks[current].get_task_cx_ptr2();
-        let next_task_cx_ptr2 = inner.tasks[next].get_task_cx_ptr2();
-        core::mem::drop(inner);
-        unsafe {
-            __switch(
-                current_task_cx_ptr2,
-                next_task_cx_ptr2,
-            );
-        }
-    } else {
-        panic!("All applications completed!");
+        inner.tasks[current].task_status = TaskStatus::Ready;
     }
-}
 
+    fn mark_current_exited(&self) {
+        let mut inner = self.inner.borrow_mut();
+        let current = inner.current_task;
+        inner.tasks[current].task_status = TaskStatus::Exited;
+    }
+
+    fn find_next_task(&self) -> Option<usize> {
+        let inner = self.inner.borrow();
+        let current = inner.current_task;
+        (current + 1..current + self.num_app + 1)
+            .map(|id| id % self.num_app)
+            .find(|id| {
+                inner.tasks[*id].task_status == TaskStatus::Ready
+            })
+    }
+
+    fn run_next_task(&self) {
+        if let Some(next) = self.find_next_task() {
+            let mut inner = self.inner.borrow_mut();
+            let current = inner.current_task;
+            inner.tasks[next].task_status = TaskStatus::Running;
+            inner.current_task = next;
+            let current_task_cx_ptr2 = inner.tasks[current].get_task_cx_ptr2();
+            let next_task_cx_ptr2 = inner.tasks[next].get_task_cx_ptr2();
+            core::mem::drop(inner);
+            unsafe {
+                __switch(
+                    current_task_cx_ptr2,
+                    next_task_cx_ptr2,
+                );
+            }
+        } else {
+            panic!("All applications completed!");
+        }
+    }
 }
 
 pub fn run_first_task() {
