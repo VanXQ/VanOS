@@ -16,3 +16,6 @@ pub fn syscall(syscall_id: usize, args: [usize; 3]) -> isize {
         _ => panic!("Unsupported syscall_id: {}", syscall_id),
     }
 }
+
+const SYSCALL_GET_TIME: usize = 169;
+SYSCALL_GET_TIME => sys_get_time(),
