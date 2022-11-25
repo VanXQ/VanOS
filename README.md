@@ -2,6 +2,8 @@
 
 20301174-万兴全
 
+已推送到[VanXQ/VanOS at lab4 (github.com)](https://github.com/VanXQ/VanOS/tree/lab4)
+
 ## 一、实验步骤 
 
 本实验的主要目的是实现一个支持多道程序和协作式调度的操作系统。
@@ -626,15 +628,15 @@ pub fn rust_main() -> ! {
 
 ### （1）分析应用程序是如何加载的；
 
-
+config.rs中声明了内核使用的常数。其中，APP_BASE_ADDRESS为0x80400000 ，APP_SIZE_LIMIT为 0x20000 ，从APP_BASE_ADDRESS开始依次为每个应用预留一段空间，这意味着从0x80400000开始为每个应用预留的空间大小为0x20000。由于每个应用被加载到内存中的地址不同，因此他们的连接脚本linker.ld中的BASE_ADDRESS不同。于是通过build.py这个python脚本来设置应用地址，封装后通过loader.rs中的load_apps（）方法实现应用的加载。
 
 ### （2）分析多道程序如何设计和实现的；
 
-
+在task/context.rs中定义了TaskContext标识应用执行上下文，定义TaskConyrolBlock的结构表示应用执行上下文的状态，TaskManager数据结构控制任务的切换和执行。定义sys_yield接口，并于syscall.rs中封装为yield函数。应用程序在用户态执行后，通过系统调用sys_yield使自己主动暂停，TaskManager数据结构中，定义了成员函数run_next_task实现任务控制块的切换，用switch的汇编脚本函数完成底层的任务上下文切换，最后通过sys_exit退出任务，结束。
 
 ### （3）分析所实现的多道程序操作系统中的任务是如何实现的，以及它和理论课程里的进程和线程有什么区别和联系。
 
-
+任务的上下文使用TaskContext结构记录任务的上下文信息，任务的运行状态及任务控制块在内核中维护任务的运行状态，由TaskControlBlock结构表示应用执行上下文的状态，全局的任务管理器来管理任务控制描述的应用程序TaskManager，实现sys_yield来实现任务暂停；sys_exit来实现任务的停止。最后任务切换由switch的汇编脚本函数完成任务上下文切换。此次实验中仅实现多道程序，实质上为进程之间的切换。与线程相比，进程具有独立的地址空间，虽然开销大，但是健壮性要更好。
 
 ## 三、Git提交截图
 
