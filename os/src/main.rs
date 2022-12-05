@@ -1,11 +1,16 @@
 #![no_std]
 #![no_main]
+
+#[macro_use]
 #![feature(panic_info_message)]
 
 use core::arch::global_asm;
+// os/src/main.rs
 
 
 extern crate alloc;
+
+extern crate bitflags;
 
 
 #[macro_use]
