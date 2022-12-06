@@ -16,12 +16,13 @@ pub fn init_heap() {
     }
 }
 
+
 #[alloc_error_handler]
 pub fn handle_alloc_error(layout: core::alloc::Layout) -> ! {
     panic!("Heap allocation error, layout = {:?}", layout);
 }
 
-
+// os/src/mm/heap_allocator.rs
 
 #[allow(unused)]
 pub fn heap_test() {

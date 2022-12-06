@@ -1,15 +1,15 @@
 #![no_std]
 #![no_main]
-
-#[macro_use]
+#![macro_use]
 #![feature(panic_info_message)]
+#![feature(alloc_error_handler)]
 
 use core::arch::global_asm;
-// os/src/main.rs
 
 
 extern crate alloc;
 
+#[macro_use]
 extern crate bitflags;
 
 
@@ -24,6 +24,7 @@ mod config;
 mod task;
 mod timer;
 mod mm;
+mod sync;
 
 
 global_asm!(include_str!("entry.asm"));
@@ -41,6 +42,8 @@ fn clear_bss() {
 pub fn rust_main() -> ! {
     clear_bss();
     println!("[Kernel] Hello, world!");
+
+
     mm::init();
 
     trap::init();
