@@ -1,10 +1,7 @@
-// os/src/mm/page_table.rs
-
-use bitflags::*;
-
 use super::{frame_alloc, PhysPageNum, FrameTracker, VirtPageNum, VirtAddr, StepByOne};
 use alloc::vec::Vec;
 use alloc::vec;
+use bitflags::*;
 
 bitflags! {
     pub struct PTEFlags: u8 {
@@ -18,7 +15,6 @@ bitflags! {
         const D = 1 << 7;
     }
 }
-
 
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -57,14 +53,12 @@ impl PageTableEntry {
     }
 }
 
-
-
-
 pub struct PageTable {
     root_ppn: PhysPageNum,
     frames: Vec<FrameTracker>,
 }
 
+/// Assume that it won't oom when creating/mapping.
 impl PageTable {
     pub fn new() -> Self {
         let frame = frame_alloc().unwrap();
@@ -73,11 +67,13 @@ impl PageTable {
             frames: vec![frame],
         }
     }
-}
-
-// os/src/mm/page_table.rs
-
-impl PageTable {
+    /// Temporarily used to get arguments from user space.
+    pub fn from_token(satp: usize) -> Self {
+        Self {
+            root_ppn: PhysPageNum::from(satp & ((1usize << 44) - 1)),
+            frames: Vec::new(),
+        }
+    }
     fn find_pte_create(&mut self, vpn: VirtPageNum) -> Option<&mut PageTableEntry> {
         let idxs = vpn.indexes();
         let mut ppn = self.root_ppn;
@@ -97,59 +93,65 @@ impl PageTable {
         }
         result
     }
-
-#[allow(unused)]
-pub fn map(&mut self, vpn: VirtPageNum, ppn: PhysPageNum, flags: PTEFlags) {
-    let pte = self.find_pte_create(vpn).unwrap();
-    assert!(!pte.is_valid(), "vpn {:?} is mapped before mapping", vpn);
-    *pte = PageTableEntry::new(ppn, flags | PTEFlags::V);
-}
-
-#[allow(unused)]
-pub fn unmap(&mut self, vpn: VirtPageNum) {
-    let pte = self.find_pte_create(vpn).unwrap();
-    assert!(pte.is_valid(), "vpn {:?} is invalid before unmapping", vpn);
-    *pte = PageTableEntry::empty();
-}
-
-}
-
-// os/src/mm/page_table.rs
-
-impl PageTable {
-    /// Temporarily used to get arguments from user space.
-    pub fn from_token(satp: usize) -> Self {
-        Self {
-            root_ppn: PhysPageNum::from(satp & ((1usize << 44) - 1)),
-            frames: Vec::new(),
+    fn find_pte(&self, vpn: VirtPageNum) -> Option<&PageTableEntry> {
+        let idxs = vpn.indexes();
+        let mut ppn = self.root_ppn;
+        let mut result: Option<&PageTableEntry> = None;
+        for i in 0..3 {
+            let pte = &ppn.get_pte_array()[idxs[i]];
+            if i == 2 {
+                result = Some(pte);
+                break;
+            }
+            if !pte.is_valid() {
+                return None;
+            }
+            ppn = pte.ppn();
         }
+        result
     }
-    
-
-fn find_pte(&self, vpn: VirtPageNum) -> Option<&PageTableEntry> {
-    let idxs = vpn.indexes();
-    let mut ppn = self.root_ppn;
-    let mut result: Option<&PageTableEntry> = None;
-    for i in 0..3 {
-        let pte = &ppn.get_pte_array()[idxs[i]];
-        if i == 2 {
-            result = Some(pte);
-            break;
-        }
-        if !pte.is_valid() {
-            return None;
-        }
-        ppn = pte.ppn();
+    #[allow(unused)]
+    pub fn map(&mut self, vpn: VirtPageNum, ppn: PhysPageNum, flags: PTEFlags) {
+        let pte = self.find_pte_create(vpn).unwrap();
+        assert!(!pte.is_valid(), "vpn {:?} is mapped before mapping", vpn);
+        *pte = PageTableEntry::new(ppn, flags | PTEFlags::V);
     }
-    result
+    #[allow(unused)]
+    pub fn unmap(&mut self, vpn: VirtPageNum) {
+        let pte = self.find_pte_create(vpn).unwrap();
+        assert!(pte.is_valid(), "vpn {:?} is invalid before unmapping", vpn);
+        *pte = PageTableEntry::empty();
+    }
+    pub fn translate(&self, vpn: VirtPageNum) -> Option<PageTableEntry> {
+        self.find_pte(vpn)
+            .map(|pte| {pte.clone()})
+    }
+    pub fn token(&self) -> usize {
+        8usize << 60 | self.root_ppn.0
+    }
 }
 
-pub fn translate(&self, vpn: VirtPageNum) -> Option<PageTableEntry> {
-    self.find_pte(vpn)
-        .map(|pte| {pte.clone()})
-}
-pub fn token(&self) -> usize {
-    8usize << 60 | self.root_ppn.0
-}
-
+pub fn translated_byte_buffer(token: usize, ptr: *const u8, len: usize) -> Vec<&'static mut [u8]> {
+    let page_table = PageTable::from_token(token);
+    let mut start = ptr as usize;
+    let end = start + len;
+    let mut v = Vec::new();
+    while start < end {
+        let start_va = VirtAddr::from(start);
+        let mut vpn = start_va.floor();
+        let ppn = page_table
+            .translate(vpn)
+            .unwrap()
+            .ppn();
+        vpn.step();
+        let mut end_va: VirtAddr = vpn.into();
+        end_va = end_va.min(VirtAddr::from(end));
+        if end_va.page_offset() == 0 {
+            v.push(&mut ppn.get_bytes_array()[start_va.page_offset()..]);
+        } else {
+            v.push(&mut ppn.get_bytes_array()[start_va.page_offset()..end_va.page_offset()]);
+        }
+        start = end_va.into();
+    }
+    v
 }
