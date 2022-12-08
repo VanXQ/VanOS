@@ -47,3 +47,13 @@ app_{0}_end:"#, idx, app, TARGET_PATH)?;
     }
     Ok(())
 }
+
+
+//os/build.rs
+
+writeln!(f, r#"
+    .global _app_names
+_app_names:"#)?;
+    for app in apps.iter() {
+        writeln!(f, r#"    .string "{}""#, app)?;
+    }
