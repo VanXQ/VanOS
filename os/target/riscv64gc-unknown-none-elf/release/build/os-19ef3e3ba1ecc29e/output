@@ -4,5 +4,6 @@ app_0: 00power_3
 app_1: 01power_5
 app_2: 02power_7
 app_3: 03sleep
-app_4: initproc
-app_5: user_shell
+app_4: hello_world
+app_5: initproc
+app_6: user_shell
