@@ -30,7 +30,8 @@
 
 ### lab6-12.7
 
-
+[VanXQ/VanOS at lab6 (github.com)](https://github.com/VanXQ/VanOS/tree/lab6)
 
 ### lab7-12.14
 
+[VanXQ/VanOS at lab7 (github.com)](https://github.com/VanXQ/VanOS/tree/lab7)
