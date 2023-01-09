@@ -2,7 +2,7 @@
 
 20301174-万兴全
 
-仓库链接：[VanXQ/VanOS at lab5 (github.com)](https://github.com/VanXQ/VanOS/tree/lab5)
+已推送到[VanXQ/VanOS at lab5 (github.com)](https://github.com/VanXQ/VanOS/tree/lab5)
 
 ## 一、实验步骤 
 
