@@ -2,6 +2,8 @@
 
 20301174-万兴全
 
+已推送到[VanXQ/VanOS at lab1 (github.com)](https://github.com/VanXQ/VanOS/tree/lab1)
+
 ## 一、实验步骤 
 
 本实验的主要目的是构建一个独立的不依赖于rust标准库的可执行程序。
